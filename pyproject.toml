@@ -1,0 +1,24 @@
+[project]
+name = "bayesian-water-mass"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Dan",email = "d.a.heathcote@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11,<4.0"
+dependencies = [
+    "numpy (>=2.2.6,<3.0.0)",
+    "pygeoinf @ git+http://github.com/da380/pygeoinf@develop",
+    "pyslfp @ git+http://github.com/da380/pyslfp@develop",
+    "jupyter (>=1.1.1,<2.0.0)",
+    "seaborn (>=0.13.2,<0.14.0)",
+    "cmocean (>=4.0.3,<5.0.0)",
+    "netcdf4 (>=1.7.2,<2.0.0)",
+    "scipy (>=1.16.1,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
