@@ -2,11 +2,16 @@ import pygeoinf as inf
 import numpy as np
 from typing import List, Any
 import matplotlib.pyplot as plt
+from scipy.spatial.distance import cdist
+
 
 class GridSpace(inf.HilbertSpace):
     def __init__(self, shape: tuple[int, ...]):
-        self._shape = shape
-        self._dim = np.prod(shape)
+        if isinstance(shape, int):
+            self._shape = (shape,)
+        else:
+            self._shape = tuple(shape)
+        self._dim = int(np.prod(self._shape))
         
     @property
     def dim(self) -> int:
@@ -45,6 +50,41 @@ class GridSpace(inf.HilbertSpace):
     
 
 class WaterMassForwardOperator:
+
+
+    def __init__(self, mat: np.ndarray, ):
+        self._mat = mat
+        self._number_of_observation_variables = mat.shape[0]
+        self._number_of_water_masses = mat.shape[1]
+
+    @property
+    def mat(self) -> np.ndarray:
+        return self._mat
+
+    @property
+    def number_of_observation_variables(self) -> int:
+        return self._number_of_observation_variables
+
+    @property
+    def number_of_water_masses(self) -> int:
+        return self._number_of_water_masses
+
+    def form_water_mass_matrix():
+        # 
+        pass
+
+    def apply_matrix(self, v: np.ndarray) -> np.ndarray:
+        # Ensure the matrix and vector dimensions are compatible
+        assert self._mat.shape[1] == v.shape[1], "Matrix columns must match number of input variables"
+        
+        # Perform the matrix multiplication
+        result = self._mat @ v.T  # Shape will be (m, n)
+        return result.T  # Return shape (n, m)
+
+    
+
+
+class OldWaterMassForwardOperator:
     def __init__(self, space: GridSpace, mat: np.ndarray):
         self._space = space
         self._mat = mat
@@ -99,7 +139,37 @@ class WaterMassForwardOperator:
         )
     
 
-def create_spatial_covariance_matrix(shape: tuple[int, ...], std: float, length_scale: float) -> np.ndarray:
+def create_spatial_covariance_matrix(
+    shape: tuple[int, ...],
+    std: float,
+    length_scale: float,
+    taper: bool = True,
+    taper_distance_multiplier: float = 2.0,
+) -> np.ndarray:
+    """
+    Create a covariance matrix with squared exponential (Gaussian) decay using vectorized operations.
+    Optionally apply a compactly supported PSD taper to reduce long-range correlations.
+    """
+    # Generate coordinates for any dimensionality (1D, 2D, 3D, etc.)
+    coords = np.indices(shape).reshape(len(shape), -1).T
+    # Compute the pairwise Squared Euclidean Distance matrix
+    dists_sq = cdist(coords, coords, 'sqeuclidean')
+    # Apply the Squared Exponential Kernel: 
+    # K(r) = sigma^2 * exp(-d^2 / (2 * l^2))
+    cov_matrix = (std**2) * np.exp(-dists_sq / (2 * length_scale**2))
+
+    if taper:
+        # Wendland C2 taper (compact support, PSD in low dimensions)
+        cutoff = taper_distance_multiplier * length_scale
+        dists = np.sqrt(dists_sq)
+        r = dists / cutoff
+        taper_vals = np.where(r < 1.0, (1.0 - r) ** 4 * (4.0 * r + 1.0), 0.0)
+        cov_matrix = cov_matrix * taper_vals
+
+    return cov_matrix
+
+
+def create_spatial_covariance_matrix_old(shape: tuple[int, ...], std: float, length_scale: float) -> np.ndarray:
     """
     Create a covariance matrix with squared exponential (Gaussian) decay based on spatial distance.
     
