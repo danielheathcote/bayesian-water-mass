@@ -43,7 +43,6 @@ def get_measurement_locations(csv_path="data/SO_data_4_dan.csv"):
     return lats, lons
 
 
-
 def restrict_to_domain(lats, lons, lat_min, lat_max, lon_min, lon_max):
     """
     Keep only the measurement locations inside the rectangular model domain.
