@@ -1,2 +1,5 @@
 # Data file
 WMA_fractions_v2.csv
+
+# Python bytecode
+__pycache__/
